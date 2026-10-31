@@ -15,7 +15,7 @@ macOS only. **Not for iOS.** Requires macOS 13+, an AppKit run loop (a regular `
 ## Swift
 
 ```swift
-.package(url: "https://github.com/winstonzhao/permission-guide", branch: "main")
+.package(url: "https://github.com/builtby-win/permission-guide", branch: "main")
 // target dependency: .product(name: "PermissionGuide", package: "permission-guide")
 ```
 
@@ -41,7 +41,7 @@ void pg_present(int kind, const char *app_path, const char *app_name,
 void pg_dismiss(void);
 ```
 
-Either link the `CPermissionGuide` SwiftPM product (header: `Sources/CPermissionGuide/include/permission_guide.h`) or use the prebuilt, universal (arm64 + x86_64) `PermissionGuide.xcframework.zip` attached to each [release](https://github.com/winstonzhao/permission-guide/releases) (SHA-256 alongside). Build it yourself with `scripts/build-xcframework.sh`.
+Either link the `CPermissionGuide` SwiftPM product (header: `Sources/CPermissionGuide/include/permission_guide.h`) or use the prebuilt, universal (arm64 + x86_64) `PermissionGuide.xcframework.zip` attached to each [release](https://github.com/builtby-win/permission-guide/releases) (SHA-256 alongside). Build it yourself with `scripts/build-xcframework.sh`.
 
 Linking requirements (the static library depends on the Swift runtime):
 
@@ -51,7 +51,7 @@ Linking requirements (the static library depends on the Swift runtime):
 ## Rust
 
 ```toml
-permission-guide = { git = "https://github.com/winstonzhao/permission-guide", branch = "main" }
+permission-guide = { git = "https://github.com/builtby-win/permission-guide", branch = "main" }
 ```
 
 ```rust

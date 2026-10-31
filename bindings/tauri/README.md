@@ -1,6 +1,6 @@
 # tauri-plugin-permission-guide
 
-Tauri v2 plugin for [permission-guide](https://github.com/winstonzhao/permission-guide): a docked, non-activating panel beside System Settings that walks users through dragging your app into the Accessibility, Screen Recording or Input Monitoring lists. macOS only (other platforms: `status` is `false`, `present` resolves `granted: false`).
+Tauri v2 plugin for [permission-guide](https://github.com/builtby-win/permission-guide): a docked, non-activating panel beside System Settings that walks users through dragging your app into the Accessibility, Screen Recording or Input Monitoring lists. macOS only (other platforms: `status` is `false`, `present` resolves `granted: false`).
 
 ## Install
 

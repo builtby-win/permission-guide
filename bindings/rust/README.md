@@ -11,4 +11,4 @@ permission-guide = "0.1"
 
 See `examples/present.rs`. Binaries must carry `-Wl,-rpath,/usr/lib/swift`; for Tauri apps use the `permission-guide-tauri` build helper (`permission_guide_tauri::link_swift_runtime()` in your `build.rs`).
 
-Source of truth: <https://github.com/winstonzhao/permission-guide>. License: MIT.
+Source of truth: <https://github.com/builtby-win/permission-guide>. License: MIT.

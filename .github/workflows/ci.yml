@@ -16,6 +16,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Vendored Swift copy is in sync
+        run: |
+          scripts/vendor-swift.sh
+          git add -N bindings/rust/swift
+          git diff --exit-code -- bindings/rust/swift
       - run: cargo build --manifest-path bindings/rust/Cargo.toml --examples
       - run: cargo check --manifest-path bindings/rust/Cargo.toml
 

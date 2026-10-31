@@ -1,6 +1,6 @@
 # tauri-plugin-permission-guide
 
-Tauri v2 plugin for [permission-guide](../..): a docked, non-activating panel beside System Settings that walks users through dragging your app into the Accessibility, Screen Recording or Input Monitoring lists. macOS only (other platforms: `status` is `false`, `present` resolves `granted: false`).
+Tauri v2 plugin for [permission-guide](https://github.com/winstonzhao/permission-guide): a docked, non-activating panel beside System Settings that walks users through dragging your app into the Accessibility, Screen Recording or Input Monitoring lists. macOS only (other platforms: `status` is `false`, `present` resolves `granted: false`).
 
 ## Install
 
@@ -8,13 +8,13 @@ Tauri v2 plugin for [permission-guide](../..): a docked, non-activating panel be
 
    ```toml
    [dependencies]
-   tauri-plugin-permission-guide = { path = "…/permission-guide/bindings/tauri" }
+   tauri-plugin-permission-guide = "0.1"
 
    [build-dependencies]
-   permission-guide-tauri = { path = "…/permission-guide/bindings/tauri/link-helper" }
+   permission-guide-tauri = "0.1"
    ```
 
-2. Swift runtime rpath. The plugin links Swift, but link args from dependency build scripts never reach your final binary, so without `-rpath /usr/lib/swift` the app dies at launch (`libswift_Concurrency` not found). In `src-tauri/build.rs`:
+2. Swift runtime rpath. The plugin links Swift, but link args from dependency build scripts never reach your final binary, so without `-rpath /usr/lib/swift` the app dies at launch (`libswift_Concurrency` not found). **Required:** add `permission_guide_tauri::link_swift_runtime()` to your app's `src-tauri/build.rs`:
 
    ```rust
    fn main() {

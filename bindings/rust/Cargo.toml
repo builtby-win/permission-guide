@@ -2,10 +2,20 @@
 name = "permission-guide"
 version = "0.1.0"
 edition = "2021"
-description = "Rust bindings for the native macOS permission-guide panel"
+rust-version = "1.70"
+description = "Rust bindings for the native macOS permission guide panel (Accessibility, Screen Recording, Input Monitoring)"
 license = "MIT"
+repository = "https://github.com/winstonzhao/permission-guide"
+homepage = "https://github.com/winstonzhao/permission-guide"
+readme = "README.md"
+keywords = ["macos", "permissions", "accessibility", "tcc", "onboarding"]
+categories = ["os::macos-apis", "api-bindings", "gui"]
+include = ["src/**", "examples/**", "swift/**", "/build.rs", "/Cargo.toml", "/README.md", "/LICENSE"]
 
 [lib]
 name = "permission_guide"
+
+[package.metadata.docs.rs]
+targets = ["aarch64-apple-darwin"]
 
 [workspace]

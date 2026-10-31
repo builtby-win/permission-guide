@@ -2,8 +2,15 @@
 name = "permission-guide-tauri"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.70"
 description = "build.rs helper for apps using tauri-plugin-permission-guide (Swift runtime rpath)"
 license = "MIT"
+repository = "https://github.com/winstonzhao/permission-guide"
+homepage = "https://github.com/winstonzhao/permission-guide"
+readme = "README.md"
+keywords = ["tauri", "macos", "build-script", "swift", "rpath"]
+categories = ["development-tools::build-utils", "os::macos-apis"]
+include = ["src/**", "/Cargo.toml", "/README.md", "/LICENSE"]
 
 [lib]
 name = "permission_guide_tauri"

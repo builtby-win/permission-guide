@@ -3,10 +3,21 @@ use std::process::Command;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=DOCS_RS");
+    // docs.rs has no Swift toolchain; the extern declarations compile without linking.
+    if std::env::var_os("DOCS_RS").is_some() {
+        return;
+    }
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("macos") {
         return;
     }
-    let pkg = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("../..");
+    // In the repo, build the root package (single source of truth). In a published tarball
+    // there is no ../../Package.swift, so fall back to the vendored copy in ./swift
+    // (kept in sync by scripts/vendor-swift.sh).
+    let manifest = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+    let repo_root = manifest.join("../..");
+    let pkg = if repo_root.join("Package.swift").is_file() { repo_root } else { manifest.join("swift") };
+    assert!(pkg.join("Package.swift").is_file(), "Swift package not found at {}", pkg.display());
     println!("cargo:rerun-if-changed={}", pkg.join("Sources").display());
     println!("cargo:rerun-if-changed={}", pkg.join("Package.swift").display());
 

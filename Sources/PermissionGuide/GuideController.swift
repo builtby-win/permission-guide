@@ -11,12 +11,14 @@ final class GuideController {
     private var pollTimer: Timer?
     private var observer: NSObjectProtocol?
     private var finishing = false
+    private var generation = 0
 
     func present(_ kind: PermissionKind, appURL: URL, appName: String?, completion: @escaping (Bool) -> Void) {
         if self.completion != nil { dismiss(granted: false) }
         self.kind = kind
         self.completion = completion
         finishing = false
+        generation += 1
 
         NSWorkspace.shared.open(kind.paneURL)
 
@@ -58,8 +60,12 @@ final class GuideController {
         finishing = true
         pollTimer?.invalidate(); pollTimer = nil
         panel?.showGranted()
+        let token = generation
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
-            MainActor.assumeIsolated { self?.dismiss(granted: true) }
+            MainActor.assumeIsolated {
+                guard let self, self.generation == token else { return }
+                self.dismiss(granted: true)
+            }
         }
     }
 

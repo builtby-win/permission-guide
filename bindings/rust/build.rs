@@ -11,19 +11,27 @@ fn main() {
     println!("cargo:rerun-if-changed={}", pkg.join("Package.swift").display());
 
     let scratch = PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("swift-build");
+    // SwiftPM's incremental static-archive packing leaves libCPermissionGuide.a holding a stale
+    // copy of PermissionGuide.o after source edits (and the linker prefers it). Always build clean;
+    // this script only reruns when Sources/Package.swift change.
+    let _ = std::fs::remove_dir_all(&scratch);
     let arch = match std::env::var("CARGO_CFG_TARGET_ARCH").as_deref() {
         Ok("x86_64") => "x86_64",
         _ => "arm64",
     };
-    let status = Command::new("swift")
-        .args(["build", "-c", "release", "--product", "CPermissionGuide", "--product", "PermissionGuide", "--arch", arch])
-        .arg("--package-path")
-        .arg(&pkg)
-        .arg("--scratch-path")
-        .arg(&scratch)
-        .status()
-        .expect("failed to run `swift build`");
-    assert!(status.success(), "swift build failed");
+    // One invocation per product: with several `--product` flags a clean SwiftPM build only
+    // produces the last one, so libCPermissionGuide.a goes missing.
+    for product in ["CPermissionGuide", "PermissionGuide"] {
+        let status = Command::new("swift")
+            .args(["build", "-c", "release", "--product", product, "--arch", arch])
+            .arg("--package-path")
+            .arg(&pkg)
+            .arg("--scratch-path")
+            .arg(&scratch)
+            .status()
+            .expect("failed to run `swift build`");
+        assert!(status.success(), "swift build failed");
+    }
 
     let bin = Command::new("swift")
         .args(["build", "-c", "release", "--arch", arch, "--show-bin-path"])

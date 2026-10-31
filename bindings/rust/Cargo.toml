@@ -1,0 +1,11 @@
+[package]
+name = "permission-guide"
+version = "0.1.0"
+edition = "2021"
+description = "Rust bindings for the native macOS permission-guide panel"
+license = "MIT"
+
+[lib]
+name = "permission_guide"
+
+[workspace]

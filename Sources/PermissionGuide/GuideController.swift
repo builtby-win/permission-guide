@@ -11,6 +11,7 @@ final class GuideController {
     private var pollTimer: Timer?
     private var observer: NSObjectProtocol?
     private var finishing = false
+    private var fadingOut = false
     private var generation = 0
 
     func present(_ kind: PermissionKind, appURL: URL, appName: String?, completion: @escaping (Bool) -> Void) {
@@ -18,6 +19,7 @@ final class GuideController {
         self.kind = kind
         self.completion = completion
         finishing = false
+        fadingOut = false
         generation += 1
 
         NSWorkspace.shared.open(kind.paneURL)
@@ -28,11 +30,12 @@ final class GuideController {
             ?? appURL.deletingPathExtension().lastPathComponent
         let p = GuidePanel(appURL: appURL, appName: name)
         panel = p
-        p.orderOut(nil)
 
-        trackTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
+        let t = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.track() }
         }
+        RunLoop.main.add(t, forMode: .common)
+        trackTimer = t
         pollTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.checkGranted() }
         }
@@ -61,24 +64,32 @@ final class GuideController {
         pollTimer?.invalidate(); pollTimer = nil
         panel?.showGranted()
         let token = generation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.generation == token else { return }
-                self.dismiss(granted: true)
+                self.fadingOut = true
+                self.panel?.setShown(false)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                    MainActor.assumeIsolated {
+                        guard let self, self.generation == token else { return }
+                        self.dismiss(granted: true)
+                    }
+                }
             }
         }
     }
 
     private func track() {
         guard let panel else { return }
-        guard let frame = SettingsWindow.frame() else { panel.orderOut(nil); return }
+        if fadingOut { return }
+        guard let frame = SettingsWindow.frame() else { panel.setShown(false); return }
         let size = panel.frame.size
         let inset: CGFloat = 14
         let w = min(size.width, frame.width - 2 * inset)
         var target = NSRect(x: frame.midX - w / 2, y: frame.minY + inset, width: w, height: size.height)
         target = target.integral
         if panel.frame != target { panel.setFrame(target, display: true) }
-        if !panel.isVisible { panel.orderFrontRegardless() }
+        panel.setShown(true)
     }
 }
 

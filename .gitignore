@@ -2,3 +2,8 @@
 .swiftpm/
 *.png
 target/
+bindings/*/target/
+node_modules/
+dist/
+build/
+.DS_Store

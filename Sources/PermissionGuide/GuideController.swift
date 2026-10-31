@@ -28,10 +28,7 @@ final class GuideController {
 
         NSWorkspace.shared.open(kind.paneURL)
 
-        let name = appName
-            ?? (Bundle(url: appURL)?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
-            ?? (Bundle(url: appURL)?.object(forInfoDictionaryKey: "CFBundleName") as? String)
-            ?? appURL.deletingPathExtension().lastPathComponent
+        let name = resolveAppName(appName, appURL: appURL)
         let p = GuidePanel(appURL: appURL, appName: name)
         panel = p
 
@@ -138,4 +135,14 @@ enum SettingsWindow {
         guard let r = best, let primary = NSScreen.screens.first else { return nil }
         return NSRect(x: r.minX, y: primary.frame.height - r.maxY, width: r.width, height: r.height)
     }
+}
+
+/// Explicit name, else bundle display name, else bundle name, else the file name sans extension.
+func resolveAppName(_ explicit: String?, appURL: URL) -> String {
+    let info = Bundle(url: appURL)
+    for candidate in [explicit, info?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String,
+                      info?.object(forInfoDictionaryKey: "CFBundleName") as? String] {
+        if let c = candidate, !c.isEmpty { return c }
+    }
+    return appURL.deletingPathExtension().lastPathComponent
 }

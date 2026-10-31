@@ -5,7 +5,9 @@ let package = Package(
     name: "PermissionGuide",
     platforms: [.macOS(.v13)],
     products: [
+        // Swift API.
         .library(name: "PermissionGuide", targets: ["PermissionGuide"]),
+        // C ABI (pg_status/pg_present/pg_dismiss); header in Sources/CPermissionGuide/include.
         .library(name: "CPermissionGuide", targets: ["CPermissionGuide"]),
     ],
     targets: [
@@ -13,6 +15,7 @@ let package = Package(
         // C ABI: @_cdecl exports; header lives in include/ for C/Rust/Go consumers.
         .target(name: "CPermissionGuide", dependencies: ["PermissionGuide"],
                 exclude: ["include"]),
+        .testTarget(name: "PermissionGuideTests", dependencies: ["PermissionGuide"]),
         .executableTarget(name: "PermissionGuideExample", dependencies: ["PermissionGuide"],
                           path: "Example/PermissionGuideExample"),
     ]

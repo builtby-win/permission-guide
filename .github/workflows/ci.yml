@@ -24,3 +24,55 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: scripts/build-xcframework.sh
+
+  # Hosted runners ship Xcode (Swift toolchain), so no separate Swift setup step.
+  # A headless Electron smoke (present/dismiss) is intentionally not run: it needs a
+  # WindowServer/AppKit session, which is not verified on hosted runners.
+  # verify-pack covers load-from-prebuilds, API surface and loud failure on broken prebuilds.
+  electron:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: bindings/electron
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: bindings/electron/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm run verify-pack
+
+  tauri:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            bindings/tauri/target
+            bindings/tauri/examples/basic/src-tauri/target
+          key: tauri-cargo-${{ runner.os }}-${{ hashFiles('bindings/tauri/Cargo.lock', 'bindings/tauri/examples/basic/src-tauri/Cargo.lock', 'bindings/rust/Cargo.toml') }}
+          restore-keys: tauri-cargo-${{ runner.os }}-
+      - name: Check plugin (regenerates permissions/)
+        working-directory: bindings/tauri
+        run: cargo check --locked
+      - name: Build example app
+        working-directory: bindings/tauri/examples/basic/src-tauri
+        run: cargo build --locked
+      - name: Typecheck guest-js
+        working-directory: bindings/tauri
+        run: |
+          npm install --no-audit --no-fund
+          npx tsc --noEmit -p .
+      - name: Permissions are up to date
+        run: |
+          git diff --exit-code -- bindings/tauri/permissions
+          test -z "$(git status --porcelain -- bindings/tauri/permissions)"

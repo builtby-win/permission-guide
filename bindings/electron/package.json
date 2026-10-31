@@ -3,27 +3,36 @@
   "version": "0.1.0",
   "description": "Docked macOS permission guide (Accessibility, Screen Recording, Input Monitoring) for Electron and Node",
   "license": "MIT",
-  "os": ["darwin"],
-  "cpu": ["arm64", "x64"],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64",
+    "x64"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "prebuilds", "native", "src", "scripts", "binding.gyp", "README.md"],
+  "files": [
+    "dist",
+    "prebuilds",
+    "README.md"
+  ],
   "scripts": {
     "swift": "node scripts/build-swift.mjs",
     "build": "node scripts/build-swift.mjs && node-gyp rebuild && tsc",
     "build:ts": "tsc",
     "prebuilds": "node scripts/prebuild.mjs",
-    "install": "node-gyp-build || true",
-    "example": "electron examples/electron/main.js"
+    "example": "electron examples/electron/main.js",
+    "verify-pack": "node scripts/verify-pack.mjs"
   },
   "dependencies": {
-    "node-addon-api": "^8.0.0",
     "node-gyp-build": "^4.8.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "electron": "^33.0.0",
     "node-gyp": "^10.0.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "node-addon-api": "^8.0.0"
   }
 }

@@ -5,6 +5,10 @@ Docked, non-activating guide panel beside System Settings so users can drag your
 Swift `PermissionGuide` package in this repo. macOS only (`os`/`cpu` fields restrict install;
 on other platforms every call throws `@builtby/permission-guide is only supported on macOS`).
 
+Install: the npm tarball ships prebuilt `prebuilds/darwin-arm64` and `darwin-x64` binaries that
+`node-gyp-build` loads at runtime. There is no install script and no compile step; if the prebuild for
+your arch is missing or corrupt, the first call throws instead of silently falling back.
+
 ```ts
 import { status, present, dismiss } from '@builtby/permission-guide';
 
@@ -39,6 +43,7 @@ Needs Xcode/Swift toolchain (macOS 13+).
 npm install
 npm run build       # swift libs (clean scratch, per product, release) -> node-gyp -> tsc
 npm run prebuilds   # prebuilds/darwin-arm64 and darwin-x64 (cross-arch via node-gyp --arch)
+npm run verify-pack # npm pack, install the tarball in a temp project, check it loads from prebuilds/
 ```
 
 `scripts/build-swift.mjs` builds `CPermissionGuide` and `PermissionGuide` separately from a clean scratch

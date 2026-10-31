@@ -12,6 +12,9 @@ final class GuideController {
     private var observer: NSObjectProtocol?
     private var finishing = false
     private var fadingOut = false
+    private var placedBelow: Bool?
+    private var animatingUntil = Date.distantPast
+    private var reduceMotionNow: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
     private var generation = 0
 
     func present(_ kind: PermissionKind, appURL: URL, appName: String?, completion: @escaping (Bool) -> Void) {
@@ -20,6 +23,7 @@ final class GuideController {
         self.completion = completion
         finishing = false
         fadingOut = false
+        placedBelow = nil
         generation += 1
 
         NSWorkspace.shared.open(kind.paneURL)
@@ -84,11 +88,28 @@ final class GuideController {
         if fadingOut { return }
         guard let frame = SettingsWindow.frame() else { panel.setShown(false); return }
         let size = panel.frame.size
-        let inset: CGFloat = 14
+        let inset: CGFloat = 14, gap: CGFloat = 10
         let w = min(size.width, frame.width - 2 * inset)
-        var target = NSRect(x: frame.midX - w / 2, y: frame.minY + inset, width: w, height: size.height)
-        target = target.integral
-        if panel.frame != target { panel.setFrame(target, display: true) }
+        let screen = NSScreen.screens.max {
+            $0.frame.intersection(frame).width * $0.frame.intersection(frame).height
+                < $1.frame.intersection(frame).width * $1.frame.intersection(frame).height
+        }
+        // Prefer docking just below the window; fall back to inside its bottom edge.
+        let belowY = frame.minY - gap - size.height
+        let below = belowY >= (screen?.visibleFrame.minY ?? 0)
+        let y = below ? belowY : frame.minY + inset
+        let target = NSRect(x: frame.midX - w / 2, y: y, width: w, height: size.height).integral
+        if let placedBelow, placedBelow != below, panel.isVisible, !reduceMotionNow {
+            animatingUntil = Date().addingTimeInterval(0.3)
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.3
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                panel.animator().setFrame(target, display: true)
+            }
+        } else if Date() >= animatingUntil, panel.frame != target {
+            panel.setFrame(target, display: true)
+        }
+        placedBelow = below
         panel.setShown(true)
     }
 }

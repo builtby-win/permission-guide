@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "target": "es2021", "module": "esnext", "moduleResolution": "bundler",
+    "strict": true, "declaration": true, "rootDir": "guest-js", "outDir": "dist-js", "skipLibCheck": true
+  },
+  "include": ["guest-js"]
+}

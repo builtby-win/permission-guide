@@ -13,7 +13,6 @@ final class GuideController {
     private var finishing = false
     private var fadingOut = false
     private var placedBelow: Bool?
-    private var sawWindow = false
     private var animatingUntil = Date.distantPast
     private var reduceMotionNow: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
     private var generation = 0
@@ -25,7 +24,6 @@ final class GuideController {
         finishing = false
         fadingOut = false
         placedBelow = nil
-        sawWindow = false
         generation += 1
 
         NSWorkspace.shared.open(kind.paneURL)
@@ -85,12 +83,7 @@ final class GuideController {
     private func track() {
         guard let panel else { return }
         if fadingOut { return }
-        guard let frame = SettingsWindow.frame() else {
-            // Window gone entirely (not just minimized / on another Space) after we'd seen it: user closed Settings.
-            if sawWindow, !SettingsWindow.exists() { dismiss(granted: finishing); return }
-            panel.setShown(false); return
-        }
-        sawWindow = true
+        guard let frame = SettingsWindow.frame() else { panel.setShown(false); return }
         let size = panel.frame.size
         let inset: CGFloat = 14, gap: CGFloat = 10
         let w = min(size.width, frame.width - 2 * inset)
@@ -120,22 +113,6 @@ final class GuideController {
 
 enum SettingsWindow {
     static let bundleID = "com.apple.systempreferences"
-
-    /// True if any System Settings window exists, including minimized or on other Spaces.
-    static func exists() -> Bool {
-        let pids = Set(NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).map(\.processIdentifier))
-        guard !pids.isEmpty,
-              let list = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]
-        else { return false }
-        return list.contains { w in
-            guard let pid = w[kCGWindowOwnerPID as String] as? pid_t, pids.contains(pid),
-                  (w[kCGWindowLayer as String] as? Int) == 0,
-                  let dict = w[kCGWindowBounds as String] as? NSDictionary,
-                  let r = CGRect(dictionaryRepresentation: dict as CFDictionary)
-            else { return false }
-            return r.width > 200 && r.height > 200
-        }
-    }
 
     /// Frame of the largest on-screen System Settings window in Cocoa coordinates.
     /// On-screen-only listing excludes minimized windows and other Spaces.

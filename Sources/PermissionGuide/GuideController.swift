@@ -87,7 +87,7 @@ final class GuideController {
         if fadingOut { return }
         guard let frame = SettingsWindow.frame() else {
             // Window gone entirely (not just minimized / on another Space) after we'd seen it: user closed Settings.
-            if sawWindow, !SettingsWindow.exists() { dismiss(granted: false); return }
+            if sawWindow, !SettingsWindow.exists() { dismiss(granted: finishing); return }
             panel.setShown(false); return
         }
         sawWindow = true

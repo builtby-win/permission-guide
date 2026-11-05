@@ -1,6 +1,6 @@
 {
   "name": "tauri-plugin-permission-guide-api",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Guest JS API for tauri-plugin-permission-guide",
   "license": "MIT",
   "type": "module",

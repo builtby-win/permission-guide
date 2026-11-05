@@ -1,6 +1,6 @@
 [package]
 name = "tauri-plugin-permission-guide"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Tauri v2 plugin: docked macOS permission guide panel (Accessibility, Screen Recording, Input Monitoring)"
 rust-version = "1.77.2"
@@ -25,7 +25,7 @@ tauri-plugin = { version = "2", features = ["build"] }
 [dependencies]
 tauri = "2"
 serde = { version = "1", features = ["derive"] }
-permission-guide = { path = "../rust", version = "0.1.0" }
+permission-guide = { path = "../rust", version = "0.1.1" }
 
 # Standalone: the example app lives in a subdirectory and is its own workspace.
 [workspace]

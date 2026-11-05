@@ -83,7 +83,9 @@ final class GuideController {
     private func track() {
         guard let panel else { return }
         if fadingOut { return }
-        guard let frame = SettingsWindow.frame() else { panel.setShown(false); return }
+        // Pinned to Settings: visible only while Settings is the frontmost app (stays pending otherwise).
+        let settingsActive = NSWorkspace.shared.frontmostApplication?.bundleIdentifier == SettingsWindow.bundleID
+        guard (settingsActive || finishing), let frame = SettingsWindow.frame() else { panel.setShown(false); return }
         let size = panel.frame.size
         let inset: CGFloat = 14, gap: CGFloat = 10
         let w = min(size.width, frame.width - 2 * inset)

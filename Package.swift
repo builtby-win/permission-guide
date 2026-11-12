@@ -6,9 +6,9 @@ let package = Package(
     platforms: [.macOS(.v13)],
     products: [
         // Swift API.
-        .library(name: "PermissionGuide", targets: ["PermissionGuide"]),
+        .library(name: "PermissionGuide", type: .static, targets: ["PermissionGuide"]),
         // C ABI (pg_status/pg_present/pg_dismiss); header in Sources/CPermissionGuide/include.
-        .library(name: "CPermissionGuide", targets: ["CPermissionGuide"]),
+        .library(name: "CPermissionGuide", type: .static, targets: ["CPermissionGuide"]),
     ],
     targets: [
         .target(name: "PermissionGuide"),

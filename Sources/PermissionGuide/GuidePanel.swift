@@ -161,7 +161,8 @@ final class CardView: NSView {
 
 /// Accent circle with an up arrow that bobs toward the list; morphs into a green check on success.
 final class Badge: NSView {
-    private let arrow = NSImageView()
+    /// Plain CALayer (not a view-backed layer) so its anchor point and transforms are ours alone.
+    private let arrow = CALayer()
     private let check = CAShapeLayer()
     private var done = false
 
@@ -171,13 +172,21 @@ final class Badge: NSView {
         layer?.cornerRadius = 20
         layer?.cornerCurve = .continuous
 
-        arrow.image = NSImage(systemSymbolName: "arrow.up", accessibilityDescription: nil)?
-            .withSymbolConfiguration(.init(pointSize: 18, weight: .bold))
-        arrow.contentTintColor = .white
-        arrow.wantsLayer = true
-        arrow.frame = NSRect(x: 0, y: 0, width: 40, height: 40)
-        arrow.imageAlignment = .alignCenter
-        addSubview(arrow)
+        if let symbol = NSImage(systemSymbolName: "arrow.up", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 18, weight: .bold)) {
+            let white = NSImage(size: symbol.size, flipped: false) { rect in
+                symbol.draw(in: rect)
+                NSColor.white.set()
+                rect.fill(using: .sourceAtop)
+                return true
+            }
+            arrow.contents = white
+            arrow.bounds = CGRect(origin: .zero, size: white.size)
+            arrow.contentsGravity = .resizeAspect
+        }
+        arrow.position = CGPoint(x: 20, y: 20)
+        arrow.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
+        layer?.addSublayer(arrow)
 
         let p = CGMutablePath()
         p.move(to: CGPoint(x: 12.5, y: 20.5)); p.addLine(to: CGPoint(x: 18, y: 14.5)); p.addLine(to: CGPoint(x: 28, y: 26))
@@ -193,30 +202,25 @@ final class Badge: NSView {
 
     override func viewDidMoveToWindow() {
         guard window != nil, !done else { return }
-        if let l = arrow.layer {
-            // Rotate/scale about the center, not AppKit's default origin anchor.
-            l.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-            l.position = CGPoint(x: bounds.midX, y: bounds.midY)
-        }
         setDragging(false)
     }
 
-    /// Idle: a quick wiggle (rotate ±12°, small hop). While dragging: a slow pulse.
+    /// Idle: a slow, gentle nudge toward the list (small hop + slight tilt). While dragging: a soft pulse.
     func setDragging(_ dragging: Bool) {
-        guard !done, !reduceMotion, let l = arrow.layer else { return }
-        l.removeAllAnimations()
+        guard !done, !reduceMotion else { return }
+        arrow.removeAllAnimations()
         let ease = CAMediaTimingFunction(name: .easeInEaseOut)
         func loop(_ keyPath: String, _ from: CGFloat, _ to: CGFloat, _ duration: CFTimeInterval) {
             let a = CABasicAnimation(keyPath: keyPath)
             a.fromValue = from; a.toValue = to; a.duration = duration
             a.autoreverses = true; a.repeatCount = .infinity; a.timingFunction = ease
-            l.add(a, forKey: keyPath)
+            arrow.add(a, forKey: keyPath)
         }
         if dragging {
-            loop("transform.scale", 0.88, 1.18, 0.68)
+            loop("transform.scale", 0.94, 1.08, 1.0)
         } else {
-            loop("transform.rotation.z", -12 * .pi / 180, 12 * .pi / 180, 0.22)
-            loop("transform.translation.y", -1, 2, 0.22)
+            loop("transform.translation.y", -1, 3, 0.9)
+            loop("transform.rotation.z", -4 * .pi / 180, 4 * .pi / 180, 1.8)
         }
     }
 
@@ -228,9 +232,9 @@ final class Badge: NSView {
         done = true
         let from = layer?.backgroundColor
         refreshColor()
-        arrow.layer?.removeAllAnimations()
+        arrow.removeAllAnimations()
         check.strokeEnd = 1
-        guard !reduceMotion else { arrow.alphaValue = 0; return }
+        guard !reduceMotion else { arrow.opacity = 0; return }
 
         let color = CABasicAnimation(keyPath: "backgroundColor")
         color.fromValue = from; color.duration = 0.25
@@ -238,8 +242,8 @@ final class Badge: NSView {
 
         let out = CABasicAnimation(keyPath: "opacity")
         out.fromValue = 1; out.toValue = 0; out.duration = 0.15
-        arrow.layer?.opacity = 0
-        arrow.layer?.add(out, forKey: "out")
+        arrow.opacity = 0
+        arrow.add(out, forKey: "out")
 
         let draw = CABasicAnimation(keyPath: "strokeEnd")
         draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.3; draw.beginTime = CACurrentMediaTime() + 0.1

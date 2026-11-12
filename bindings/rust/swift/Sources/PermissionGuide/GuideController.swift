@@ -98,7 +98,7 @@ final class GuideController {
         let belowY = frame.minY - gap - size.height
         let below = belowY >= (screen?.visibleFrame.minY ?? 0)
         let y = below ? belowY : frame.minY + inset
-        let target = NSRect(x: frame.midX - w / 2, y: y, width: w, height: size.height).integral
+        let target = NSRect(x: frame.maxX - inset - w, y: y, width: w, height: size.height).integral
         if let placedBelow, placedBelow != below, panel.isVisible, !reduceMotionNow {
             animatingUntil = Date().addingTimeInterval(0.3)
             NSAnimationContext.runAnimationGroup { ctx in

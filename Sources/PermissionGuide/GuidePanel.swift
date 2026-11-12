@@ -102,15 +102,17 @@ final class CardView: NSView {
     override func layout() {
         super.layout()
         let h = bounds.height, w = bounds.width
-        badge.frame = NSRect(x: 20, y: (h - 40) / 2, width: 40, height: 40)
         let tw: CGFloat = w >= 480 ? 176 : 144
-        let closeW: CGFloat = close.isHidden ? 0 : 26
-        close.frame = NSRect(x: w - 12 - 18, y: (h - 18) / 2, width: 18, height: 18)
-        tile.frame = NSRect(x: w - 12 - closeW - tw, y: 12, width: tw, height: h - 24)
+        // The close button owns the top-right corner; everything else centers on the tile row below it.
+        let tileH: CGFloat = 48
+        close.frame = NSRect(x: w - 10 - 18, y: h - 8 - 18, width: 18, height: 18)
+        tile.frame = NSRect(x: w - 12 - tw, y: 12, width: tw, height: tileH)
+        let cy = tile.frame.midY
+        badge.frame = NSRect(x: 20, y: cy - 20, width: 40, height: 40)
         let x = badge.frame.maxX + 14
-        let tx = tile.isHidden ? w - 20 - closeW : tile.frame.minX - 12
-        title.frame = NSRect(x: x, y: h / 2 - 1, width: max(0, tx - x), height: 20)
-        hint.frame = NSRect(x: x, y: h / 2 - 19, width: max(0, tx - x), height: 16)
+        let tx = tile.isHidden ? w - 20 : tile.frame.minX - 12
+        title.frame = NSRect(x: x, y: cy - 1, width: max(0, tx - x), height: 20)
+        hint.frame = NSRect(x: x, y: cy - 19, width: max(0, tx - x), height: 16)
     }
 
     override func viewDidChangeEffectiveAppearance() {

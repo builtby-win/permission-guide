@@ -1,6 +1,6 @@
 {
   "name": "@builtby/permission-guide",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Docked macOS permission guide (Accessibility, Screen Recording, Input Monitoring) for Electron and Node",
   "license": "MIT",
   "os": [

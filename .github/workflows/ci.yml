@@ -46,7 +46,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: bindings/electron/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts  # binding.gyp makes npm auto-run `node-gyp rebuild` before the Swift libs exist; `npm run build` does both in order
       - run: npm run build
       - run: npm run verify-pack
 

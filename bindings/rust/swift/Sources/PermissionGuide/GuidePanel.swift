@@ -52,16 +52,23 @@ final class GuidePanel: NSPanel {
     }
 
     @MainActor func showGranted() { card.showGranted() }
+
+    var onClose: () -> Void {
+        get { card.onClose }
+        set { card.onClose = newValue }
+    }
 }
 
 final class CardView: NSView {
     static let size = NSSize(width: 520, height: 80)
 
     private let badge = Badge()
-    private let title = NSTextField(labelWithString: "Drag into the list above")
-    private let hint = NSTextField(labelWithString: "Then turn it on.")
+    private let title = NSTextField(labelWithString: Strings.string(.dragTitle))
+    private let hint = NSTextField(labelWithString: Strings.string(.dragHint))
     private let tile: DragTile
+    private let close = NSButton()
     private let appName: String
+    var onClose: () -> Void = {}
 
     init(appURL: URL, appName: String) {
         self.appName = appName
@@ -80,19 +87,32 @@ final class CardView: NSView {
         for l in [title, hint] { l.lineBreakMode = .byTruncatingTail; addSubview(l) }
         addSubview(badge)
         addSubview(tile)
+        close.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: Strings.string(.close))?
+            .withSymbolConfiguration(.init(pointSize: 16, weight: .semibold))
+        close.isBordered = false
+        close.contentTintColor = .tertiaryLabelColor
+        close.toolTip = Strings.string(.close)
+        close.target = self
+        close.action = #selector(closeTapped)
+        addSubview(close)
+        tile.onDragChange = { [badge] in badge.setDragging($0) }
     }
     required init?(coder: NSCoder) { fatalError() }
 
     override func layout() {
         super.layout()
         let h = bounds.height, w = bounds.width
-        badge.frame = NSRect(x: 20, y: (h - 40) / 2, width: 40, height: 40)
         let tw: CGFloat = w >= 480 ? 176 : 144
-        tile.frame = NSRect(x: w - 12 - tw, y: 12, width: tw, height: h - 24)
+        // The close button owns the top-right corner; everything else centers on the tile row below it.
+        let tileH: CGFloat = 48
+        close.frame = NSRect(x: w - 10 - 18, y: h - 8 - 18, width: 18, height: 18)
+        tile.frame = NSRect(x: w - 12 - tw, y: 12, width: tw, height: tileH)
+        let cy = tile.frame.midY
+        badge.frame = NSRect(x: 20, y: cy - 20, width: 40, height: 40)
         let x = badge.frame.maxX + 14
         let tx = tile.isHidden ? w - 20 : tile.frame.minX - 12
-        title.frame = NSRect(x: x, y: h / 2 - 1, width: max(0, tx - x), height: 20)
-        hint.frame = NSRect(x: x, y: h / 2 - 19, width: max(0, tx - x), height: 16)
+        title.frame = NSRect(x: x, y: cy - 1, width: max(0, tx - x), height: 20)
+        hint.frame = NSRect(x: x, y: cy - 19, width: max(0, tx - x), height: 16)
     }
 
     override func viewDidChangeEffectiveAppearance() {
@@ -106,6 +126,8 @@ final class CardView: NSView {
     }
     override func viewDidMoveToWindow() { viewDidChangeEffectiveAppearance() }
 
+    @objc private func closeTapped() { onClose() }
+
     func slideIn() {
         guard !reduceMotion, let layer else { return }
         let a = CABasicAnimation(keyPath: "transform.translation.y")
@@ -116,9 +138,10 @@ final class CardView: NSView {
 
     func showGranted() {
         badge.showCheck()
-        swap(title, "All set")
-        swap(hint, "\(appName) has access.")
+        swap(title, Strings.string(.doneTitle))
+        swap(hint, String(format: Strings.string(.doneHint), appName))
         tile.isEnabled = false
+        close.isHidden = true
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = reduceMotion ? 0.01 : 0.2
             tile.animator().alphaValue = 0
@@ -140,7 +163,8 @@ final class CardView: NSView {
 
 /// Accent circle with an up arrow that bobs toward the list; morphs into a green check on success.
 final class Badge: NSView {
-    private let arrow = NSImageView()
+    /// Plain CALayer (not a view-backed layer) so its anchor point and transforms are ours alone.
+    private let arrow = CALayer()
     private let check = CAShapeLayer()
     private var done = false
 
@@ -150,13 +174,21 @@ final class Badge: NSView {
         layer?.cornerRadius = 20
         layer?.cornerCurve = .continuous
 
-        arrow.image = NSImage(systemSymbolName: "arrow.up", accessibilityDescription: nil)?
-            .withSymbolConfiguration(.init(pointSize: 18, weight: .bold))
-        arrow.contentTintColor = .white
-        arrow.wantsLayer = true
-        arrow.frame = NSRect(x: 0, y: 0, width: 40, height: 40)
-        arrow.imageAlignment = .alignCenter
-        addSubview(arrow)
+        if let symbol = NSImage(systemSymbolName: "arrow.up", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 18, weight: .bold)) {
+            let white = NSImage(size: symbol.size, flipped: false) { rect in
+                symbol.draw(in: rect)
+                NSColor.white.set()
+                rect.fill(using: .sourceAtop)
+                return true
+            }
+            arrow.contents = white
+            arrow.bounds = CGRect(origin: .zero, size: white.size)
+            arrow.contentsGravity = .resizeAspect
+        }
+        arrow.position = CGPoint(x: 20, y: 20)
+        arrow.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
+        layer?.addSublayer(arrow)
 
         let p = CGMutablePath()
         p.move(to: CGPoint(x: 12.5, y: 20.5)); p.addLine(to: CGPoint(x: 18, y: 14.5)); p.addLine(to: CGPoint(x: 28, y: 26))
@@ -171,12 +203,27 @@ final class Badge: NSView {
     required init?(coder: NSCoder) { fatalError() }
 
     override func viewDidMoveToWindow() {
-        guard window != nil, !reduceMotion, !done else { return }
-        let a = CABasicAnimation(keyPath: "transform.translation.y")
-        a.fromValue = -1.5; a.toValue = 2.5; a.duration = 0.8
-        a.autoreverses = true; a.repeatCount = .infinity
-        a.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        arrow.layer?.add(a, forKey: "bob")
+        guard window != nil, !done else { return }
+        setDragging(false)
+    }
+
+    /// Idle: a slow, gentle nudge toward the list (small hop + slight tilt). While dragging: a soft pulse.
+    func setDragging(_ dragging: Bool) {
+        guard !done, !reduceMotion else { return }
+        arrow.removeAllAnimations()
+        let ease = CAMediaTimingFunction(name: .easeInEaseOut)
+        func loop(_ keyPath: String, _ from: CGFloat, _ to: CGFloat, _ duration: CFTimeInterval) {
+            let a = CABasicAnimation(keyPath: keyPath)
+            a.fromValue = from; a.toValue = to; a.duration = duration
+            a.autoreverses = true; a.repeatCount = .infinity; a.timingFunction = ease
+            arrow.add(a, forKey: keyPath)
+        }
+        if dragging {
+            loop("transform.scale", 0.94, 1.08, 1.0)
+        } else {
+            loop("transform.translation.y", -1, 3, 0.9)
+            loop("transform.rotation.z", -4 * .pi / 180, 4 * .pi / 180, 1.8)
+        }
     }
 
     func refreshColor() {
@@ -187,9 +234,9 @@ final class Badge: NSView {
         done = true
         let from = layer?.backgroundColor
         refreshColor()
-        arrow.layer?.removeAnimation(forKey: "bob")
+        arrow.removeAllAnimations()
         check.strokeEnd = 1
-        guard !reduceMotion else { arrow.alphaValue = 0; return }
+        guard !reduceMotion else { arrow.opacity = 0; return }
 
         let color = CABasicAnimation(keyPath: "backgroundColor")
         color.fromValue = from; color.duration = 0.25
@@ -197,8 +244,8 @@ final class Badge: NSView {
 
         let out = CABasicAnimation(keyPath: "opacity")
         out.fromValue = 1; out.toValue = 0; out.duration = 0.15
-        arrow.layer?.opacity = 0
-        arrow.layer?.add(out, forKey: "out")
+        arrow.opacity = 0
+        arrow.add(out, forKey: "out")
 
         let draw = CABasicAnimation(keyPath: "strokeEnd")
         draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.3; draw.beginTime = CACurrentMediaTime() + 0.1
@@ -214,6 +261,7 @@ final class Badge: NSView {
 
 final class DragTile: NSView, NSDraggingSource {
     var isEnabled = true
+    var onDragChange: (Bool) -> Void = { _ in }
     private let appURL: URL
     private let icon: NSImage
     private let iconView: NSImageView
@@ -241,7 +289,7 @@ final class DragTile: NSView, NSDraggingSource {
         grip.contentTintColor = .tertiaryLabelColor
         addSubview(grip)
         addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
-        toolTip = "Drag into the list above"
+        toolTip = Strings.string(.dragTitle)
     }
     required init?(coder: NSCoder) { fatalError() }
 
@@ -290,6 +338,7 @@ final class DragTile: NSView, NSDraggingSource {
         item.setDraggingFrame(NSRect(x: origin.x - size.width / 2, y: origin.y - size.height / 2,
                                      width: size.width, height: size.height), contents: icon)
         lift(up: true)
+        onDragChange(true)
         beginDraggingSession(with: [item], event: down, source: self)
     }
 
@@ -322,5 +371,6 @@ final class DragTile: NSView, NSDraggingSource {
         dragged = false
         downEvent = nil
         lift(up: false)
+        onDragChange(false)
     }
 }

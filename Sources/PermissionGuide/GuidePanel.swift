@@ -52,16 +52,23 @@ final class GuidePanel: NSPanel {
     }
 
     @MainActor func showGranted() { card.showGranted() }
+
+    var onClose: () -> Void {
+        get { card.onClose }
+        set { card.onClose = newValue }
+    }
 }
 
 final class CardView: NSView {
     static let size = NSSize(width: 520, height: 80)
 
     private let badge = Badge()
-    private let title = NSTextField(labelWithString: "Drag into the list above")
-    private let hint = NSTextField(labelWithString: "Then turn it on.")
+    private let title = NSTextField(labelWithString: Strings.string(.dragTitle))
+    private let hint = NSTextField(labelWithString: Strings.string(.dragHint))
     private let tile: DragTile
+    private let close = NSButton()
     private let appName: String
+    var onClose: () -> Void = {}
 
     init(appURL: URL, appName: String) {
         self.appName = appName
@@ -80,6 +87,14 @@ final class CardView: NSView {
         for l in [title, hint] { l.lineBreakMode = .byTruncatingTail; addSubview(l) }
         addSubview(badge)
         addSubview(tile)
+        close.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: Strings.string(.close))?
+            .withSymbolConfiguration(.init(pointSize: 16, weight: .semibold))
+        close.isBordered = false
+        close.contentTintColor = .tertiaryLabelColor
+        close.toolTip = Strings.string(.close)
+        close.target = self
+        close.action = #selector(closeTapped)
+        addSubview(close)
         tile.onDragChange = { [badge] in badge.setDragging($0) }
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -89,9 +104,11 @@ final class CardView: NSView {
         let h = bounds.height, w = bounds.width
         badge.frame = NSRect(x: 20, y: (h - 40) / 2, width: 40, height: 40)
         let tw: CGFloat = w >= 480 ? 176 : 144
-        tile.frame = NSRect(x: w - 12 - tw, y: 12, width: tw, height: h - 24)
+        let closeW: CGFloat = close.isHidden ? 0 : 26
+        close.frame = NSRect(x: w - 12 - 18, y: (h - 18) / 2, width: 18, height: 18)
+        tile.frame = NSRect(x: w - 12 - closeW - tw, y: 12, width: tw, height: h - 24)
         let x = badge.frame.maxX + 14
-        let tx = tile.isHidden ? w - 20 : tile.frame.minX - 12
+        let tx = tile.isHidden ? w - 20 - closeW : tile.frame.minX - 12
         title.frame = NSRect(x: x, y: h / 2 - 1, width: max(0, tx - x), height: 20)
         hint.frame = NSRect(x: x, y: h / 2 - 19, width: max(0, tx - x), height: 16)
     }
@@ -107,6 +124,8 @@ final class CardView: NSView {
     }
     override func viewDidMoveToWindow() { viewDidChangeEffectiveAppearance() }
 
+    @objc private func closeTapped() { onClose() }
+
     func slideIn() {
         guard !reduceMotion, let layer else { return }
         let a = CABasicAnimation(keyPath: "transform.translation.y")
@@ -117,9 +136,10 @@ final class CardView: NSView {
 
     func showGranted() {
         badge.showCheck()
-        swap(title, "All set")
-        swap(hint, "\(appName) has access.")
+        swap(title, Strings.string(.doneTitle))
+        swap(hint, String(format: Strings.string(.doneHint), appName))
         tile.isEnabled = false
+        close.isHidden = true
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = reduceMotion ? 0.01 : 0.2
             tile.animator().alphaValue = 0
@@ -263,7 +283,7 @@ final class DragTile: NSView, NSDraggingSource {
         grip.contentTintColor = .tertiaryLabelColor
         addSubview(grip)
         addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
-        toolTip = "Drag into the list above"
+        toolTip = Strings.string(.dragTitle)
     }
     required init?(coder: NSCoder) { fatalError() }
 

@@ -30,6 +30,7 @@ final class GuideController {
 
         let name = resolveAppName(appName, appURL: appURL)
         let p = GuidePanel(appURL: appURL, appName: name)
+        p.onClose = { [weak self] in self?.dismiss(granted: false) }
         panel = p
 
         let t = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in

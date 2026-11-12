@@ -32,4 +32,10 @@ final class PermissionGuideTests: XCTestCase {
         let app = dir.deletingLastPathComponent()
         XCTAssertEqual(resolveAppName(nil, appURL: app), "BazName")
     }
+
+    func testStringsPickFirstSupportedLanguageElseEnglish() {
+        XCTAssertEqual(Strings.string(.doneTitle, languages: ["xx-YY", "de-DE", "ja"]), "Fertig")
+        XCTAssertEqual(Strings.string(.doneTitle, languages: ["zh-Hans-CN"]), "已完成")
+        XCTAssertEqual(Strings.string(.doneTitle, languages: ["xx"]), "All set")
+    }
 }

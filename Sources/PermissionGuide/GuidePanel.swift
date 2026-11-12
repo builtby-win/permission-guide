@@ -208,7 +208,7 @@ final class Badge: NSView {
         done = true
         let from = layer?.backgroundColor
         refreshColor()
-        arrow.layer?.removeAnimation(forKey: "bob")
+        arrow.layer?.removeAllAnimations()
         check.strokeEnd = 1
         guard !reduceMotion else { arrow.alphaValue = 0; return }
 
@@ -235,6 +235,7 @@ final class Badge: NSView {
 
 final class DragTile: NSView, NSDraggingSource {
     var isEnabled = true
+    var onDragChange: (Bool) -> Void = { _ in }
     private let appURL: URL
     private let icon: NSImage
     private let iconView: NSImageView
@@ -311,6 +312,7 @@ final class DragTile: NSView, NSDraggingSource {
         item.setDraggingFrame(NSRect(x: origin.x - size.width / 2, y: origin.y - size.height / 2,
                                      width: size.width, height: size.height), contents: icon)
         lift(up: true)
+        onDragChange(true)
         beginDraggingSession(with: [item], event: down, source: self)
     }
 
@@ -343,5 +345,6 @@ final class DragTile: NSView, NSDraggingSource {
         dragged = false
         downEvent = nil
         lift(up: false)
+        onDragChange(false)
     }
 }

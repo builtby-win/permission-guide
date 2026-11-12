@@ -80,6 +80,7 @@ final class CardView: NSView {
         for l in [title, hint] { l.lineBreakMode = .byTruncatingTail; addSubview(l) }
         addSubview(badge)
         addSubview(tile)
+        tile.onDragChange = { [badge] in badge.setDragging($0) }
     }
     required init?(coder: NSCoder) { fatalError() }
 
@@ -171,12 +172,32 @@ final class Badge: NSView {
     required init?(coder: NSCoder) { fatalError() }
 
     override func viewDidMoveToWindow() {
-        guard window != nil, !reduceMotion, !done else { return }
-        let a = CABasicAnimation(keyPath: "transform.translation.y")
-        a.fromValue = -1.5; a.toValue = 2.5; a.duration = 0.8
-        a.autoreverses = true; a.repeatCount = .infinity
-        a.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        arrow.layer?.add(a, forKey: "bob")
+        guard window != nil, !done else { return }
+        if let l = arrow.layer {
+            // Rotate/scale about the center, not AppKit's default origin anchor.
+            l.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+            l.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        }
+        setDragging(false)
+    }
+
+    /// Idle: a quick wiggle (rotate ±12°, small hop). While dragging: a slow pulse.
+    func setDragging(_ dragging: Bool) {
+        guard !done, !reduceMotion, let l = arrow.layer else { return }
+        l.removeAllAnimations()
+        let ease = CAMediaTimingFunction(name: .easeInEaseOut)
+        func loop(_ keyPath: String, _ from: CGFloat, _ to: CGFloat, _ duration: CFTimeInterval) {
+            let a = CABasicAnimation(keyPath: keyPath)
+            a.fromValue = from; a.toValue = to; a.duration = duration
+            a.autoreverses = true; a.repeatCount = .infinity; a.timingFunction = ease
+            l.add(a, forKey: keyPath)
+        }
+        if dragging {
+            loop("transform.scale", 0.88, 1.18, 0.68)
+        } else {
+            loop("transform.rotation.z", -12 * .pi / 180, 12 * .pi / 180, 0.22)
+            loop("transform.translation.y", -1, 2, 0.22)
+        }
     }
 
     func refreshColor() {

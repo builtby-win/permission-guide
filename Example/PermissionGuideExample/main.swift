@@ -5,9 +5,10 @@ let kinds: [String: PermissionKind] = [
     "accessibility": .accessibility,
     "screen-recording": .screenRecording,
     "input-monitoring": .inputMonitoring,
+    "full-disk-access": .fullDiskAccess,
 ]
 guard CommandLine.arguments.count > 1, let kind = kinds[CommandLine.arguments[1]] else {
-    print("usage: PermissionGuideExample <accessibility|screen-recording|input-monitoring> [/path/to/App.app]")
+    print("usage: PermissionGuideExample <accessibility|screen-recording|input-monitoring|full-disk-access> [/path/to/App.app]")
     exit(2)
 }
 let app = NSApplication.shared

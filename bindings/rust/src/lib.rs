@@ -8,6 +8,7 @@ pub enum Kind {
     Accessibility,
     ScreenRecording,
     InputMonitoring,
+    FullDiskAccess,
 }
 
 #[cfg(target_os = "macos")]
@@ -34,6 +35,7 @@ impl Kind {
             Kind::Accessibility => 0,
             Kind::ScreenRecording => 1,
             Kind::InputMonitoring => 2,
+            Kind::FullDiskAccess => 3,
         }
     }
 }

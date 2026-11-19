@@ -3,7 +3,7 @@ import ApplicationServices
 import CoreGraphics
 
 public enum PermissionKind: Int, Sendable {
-    case accessibility = 0, screenRecording = 1, inputMonitoring = 2
+    case accessibility = 0, screenRecording = 1, inputMonitoring = 2, fullDiskAccess = 3
 
     var paneURL: URL {
         let id: String
@@ -11,6 +11,7 @@ public enum PermissionKind: Int, Sendable {
         case .accessibility: id = "Privacy_Accessibility"
         case .screenRecording: id = "Privacy_ScreenCapture"
         case .inputMonitoring: id = "Privacy_ListenEvent"
+        case .fullDiskAccess: id = "Privacy_AllFiles"
         }
         return URL(string: "x-apple.systempreferences:com.apple.preference.security?\(id)")!
     }
@@ -23,8 +24,16 @@ public enum PermissionGuide {
         case .accessibility: return AXIsProcessTrusted()
         case .screenRecording: return CGPreflightScreenCaptureAccess()
         case .inputMonitoring: return CGPreflightListenEventAccess()
+        case .fullDiskAccess: return fullDiskAccessProbes.contains { FileHandle(forReadingAtPath: $0) != nil }
         }
     }
+
+    /// macOS has no API for Full Disk Access; the test is whether a file only that permission unlocks can be opened.
+    /// The TCC databases exist on every Mac and are readable with nothing less.
+    private static let fullDiskAccessProbes = [
+        "/Library/Application Support/com.apple.TCC/TCC.db",
+        NSHomeDirectory() + "/Library/Application Support/com.apple.TCC/TCC.db",
+    ]
 
     /// Opens the Privacy pane and docks a drag-to-add guide beside System Settings.
     /// `completion(true)` on grant, `completion(false)` on dismiss. Any thread.

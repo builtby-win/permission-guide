@@ -6,6 +6,7 @@ final class PermissionGuideTests: XCTestCase {
         XCTAssertEqual(PermissionKind.accessibility.rawValue, 0)
         XCTAssertEqual(PermissionKind.screenRecording.rawValue, 1)
         XCTAssertEqual(PermissionKind.inputMonitoring.rawValue, 2)
+        XCTAssertEqual(PermissionKind.fullDiskAccess.rawValue, 3)
     }
 
     func testPaneURLs() {
@@ -13,6 +14,7 @@ final class PermissionGuideTests: XCTestCase {
                        "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
         XCTAssertTrue(PermissionKind.screenRecording.paneURL.absoluteString.hasSuffix("Privacy_ScreenCapture"))
         XCTAssertTrue(PermissionKind.inputMonitoring.paneURL.absoluteString.hasSuffix("Privacy_ListenEvent"))
+        XCTAssertTrue(PermissionKind.fullDiskAccess.paneURL.absoluteString.hasSuffix("Privacy_AllFiles"))
     }
 
     func testAppNameExplicitWins() {

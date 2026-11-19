@@ -6,6 +6,7 @@ private func kindFrom(_ k: Int32) -> PermissionKind? {
     case 0: return .accessibility
     case 1: return .screenRecording
     case 2: return .inputMonitoring
+    case 3: return .fullDiskAccess
     default: return nil
     }
 }

@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-/* kind: 0 accessibility, 1 screen recording, 2 input monitoring.
+/* kind: 0 accessibility, 1 screen recording, 2 input monitoring, 3 full disk access.
    All functions are callable from any thread. */
 
 /* Returns 1 if granted, 0 otherwise. */

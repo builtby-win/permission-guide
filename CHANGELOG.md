@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `.fullDiskAccess` kind (C ABI kind 3, Rust `Kind::FullDiskAccess`).
 - Close (×) button on the panel; completes with `false`.
 - Built-in localization (en, es, fr, de, pt, ja, ko, zh) from the system's preferred languages.
 - Arrow wiggles while idle and pulses while dragging.
